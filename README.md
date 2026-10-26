@@ -85,7 +85,7 @@ Example configuration files are stored next to the code they configure:
 
 ## Stage 1: captioning and privacy instructions
 
-The default configuration uses an InternVL backend for image captioning and privacy flags, and a Qwen text backend for edit instructions and caption combination. Raw/anonymized image comparison is an evaluation step described below.
+The default configuration uses Gemini 3.5 Flash-Lite for image captioning, privacy flags, edit instructions, and caption combination. Set `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) in your shell before running Stage 1. Install `google-genai` with the project requirements.
 
 Expected local layout:
 
@@ -138,6 +138,21 @@ python pipeline/stage1/run_stage1.py \
 ```
 
 The combined captions are written to `outputs/mscoco/combine_caption_and_edit.csv`.
+
+Edit the source images with Google's low-cost Gemini 3.1 Flash-Lite Image model:
+
+```bash
+python -m pipeline.adapters.gemini_image_edit \
+  outputs/mscoco/generate_edit_instructions.csv \
+  --captions-csv outputs/mscoco/generate_captions.csv \
+  --image-root data/mscoco \
+  --output-root outputs/mscoco/gemini_edits
+```
+
+The editor writes PNGs under the output root, preserving each input's relative
+path. It uses the public caption and edit instruction to guide each edit.
+Gemini image editing is an inference alternative; the paper's Stage 2
+SafeAttention training pipeline remains available for training a local editor.
 
 Generate privacy flags for VISPR images:
 

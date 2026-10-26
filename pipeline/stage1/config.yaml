@@ -19,8 +19,9 @@ datasets:
 purposes:
   generate_captions:
     run:
-      backend: internvl
-      model_id: OpenGVLab/InternVL2_5-8B
+      backend: gemini_vision
+      model_id: gemini-3.5-flash-lite
+      api_key_env: GEMINI_API_KEY
       system_prompt: You are a vision-language assistant that generates privacy-aware, structured descriptions of real-world images.
       prompt_path: prompts/intern_image_captioning.txt
     source:
@@ -39,8 +40,9 @@ purposes:
 
   generate_flags:
     run:
-      backend: internvl
-      model_id: OpenGVLab/InternVL2_5-8B
+      backend: gemini_vision
+      model_id: gemini-3.5-flash-lite
+      api_key_env: GEMINI_API_KEY
       system_prompt: You are a vision-language assistant for structured, privacy-aware image analysis.
       prompt_path: prompts/intern_image_flagging.txt
       max_new_tokens: 128
@@ -49,8 +51,9 @@ purposes:
 
   generate_edit_instructions:
     run:
-      backend: qwen_text
-      model_id: Qwen/Qwen3-4B-Instruct-2507
+      backend: gemini_text
+      model_id: gemini-3.5-flash-lite
+      api_key_env: GEMINI_API_KEY
       system_prompt: You generate short change descriptions for real-world image captions.
       prompt_path: prompts/qwen_image_captioning-private-expand.txt
       max_new_tokens: 512
@@ -63,8 +66,9 @@ purposes:
 
   combine_caption_and_edit:
     run:
-      backend: qwen_text
-      model_id: Qwen/Qwen3-4B-Instruct-2507
+      backend: gemini_text
+      model_id: gemini-3.5-flash-lite
+      api_key_env: GEMINI_API_KEY
       system_prompt: You are a caption rewriting assistant that write coherent yet concise image caption.
       prompt_path: prompts/qwen_caption_combine.txt
       max_new_tokens: 512

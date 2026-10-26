@@ -18,6 +18,7 @@ from pipeline.stage1.internvl_common import (
     load_internvl_model_and_tokenizer,
     run_internvl_batch,
 )
+from pipeline.stage1.gemini_common import build_gemini_client, run_gemini_batch
 
 
 @dataclass
@@ -109,9 +110,11 @@ def run_job(effective_cfg, purpose, dataset_name):
     # The paper uses InternVL for structured image responses and Qwen for text-only rewrites.
     if backend == "qwen_text":
         generator = build_text_generator(run_cfg["model_id"])
+    elif backend in {"gemini_text", "gemini_vision"}:
+        generator = build_gemini_client(run_cfg.get("api_key_env", "GEMINI_API_KEY"))
     elif backend == "internvl":
         model, tokenizer = load_internvl_model_and_tokenizer(run_cfg["model_id"], device=run_cfg["device"])
-    else:
+    elif backend not in {"gemini_text", "gemini_vision"}:
         raise ValueError(f"Unsupported backend: {backend}")
 
     desc = f"purpose={purpose} dataset={dataset_name} backend={backend}"
@@ -123,6 +126,10 @@ def run_job(effective_cfg, purpose, dataset_name):
         if backend == "qwen_text":
             msgs = build_text_messages(system_prompt, prompt_text, batch)
             outputs = run_text_batch(generator, msgs, max_new_tokens=max_new_tokens, batch_size=batch_size)
+        elif backend in {"gemini_text", "gemini_vision"}:
+            msgs = build_text_messages(system_prompt, prompt_text, batch)
+            images = [s.image_path for s in batch] if backend == "gemini_vision" else None
+            outputs = run_gemini_batch(generator, run_cfg["model_id"], msgs, images, max_new_tokens)
         elif backend == "internvl":
             image_paths = [s.image_path for s in batch]
             image_classes = [s.vars["image_class"] for s in batch]
@@ -143,7 +150,7 @@ def run_job(effective_cfg, purpose, dataset_name):
 
     # Keep one manifest per purpose so the next profile can consume it directly.
     output_column = {"generate_captions": "caption", "generate_flags": "caption", "generate_edit_instructions": "EDIT_INSTRUCTION", "combine_caption_and_edit": "COMBINED_CAPTION"}[purpose]
-    collect_captions(output_dir, Path(output_dir).with_suffix(".csv"), parse_structured=backend == "internvl", output_column=output_column)
+    collect_captions(output_dir, Path(output_dir).with_suffix(".csv"), parse_structured=backend in {"internvl", "gemini_vision"}, output_column=output_column)
 
 
 def main():
